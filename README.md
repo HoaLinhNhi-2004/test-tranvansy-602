@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VidFeed — Vertical Video Feed 
 
-## Getting Started
+Mô phỏng UX xem video cuộn dọc (TikTok / Reels) bằng **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **lucide-react**.
 
-First, run the development server:
+## Demo
+- **Live:** https://test-nguyenvana-123.vercel.app
+- **Video demo:** https://drive.google.com/...
+- **Source:** https://github.com/.../test-nguyenvana-123
 
+## Stack & Lý do chọn
+| Công nghệ | Lý do |
+|---|---|
+| Next.js App Router | Routing & layout chuẩn 2024+, RSC giúp shell render nhanh |
+| TypeScript | An toàn kiểu, IntelliSense tốt cho refactor |
+| Tailwind CSS | Style nhanh, dễ responsive (sidebar/bottom-nav switch theo breakpoint) |
+| lucide-react | Bộ icon nhẹ, tree-shake tốt |
+
+## Tính năng đã hoàn thành
+-  Vertical scroll feed với **CSS Scroll Snap**
+- Click video → Play/Pause
+- **Auto-play khi vào viewport, Auto-pause khi rời viewport** (Intersection Observer)
+-  Nút Like có state: đổi màu đỏ, tăng/giảm count
+-  Responsive Navigation: Bottom Nav (mobile) / Sidebar (desktop)
+- **Fallback UI khi video URL lỗi** — bắt qua `onError` event
+
+## Logic Play/Pause khi cuộn (Intersection Observer)
+
+Mỗi `<VideoCard>` đăng ký một `IntersectionObserver` riêng (đóng gói trong custom hook `useVideoAutoplay`) theo dõi chính phần tử `<video>` của nó:
+
+1. Khi video chiếm **≥ 70% viewport** (`intersectionRatio >= 0.7`) → gọi `videoEl.play()`.
+2. Khi rơi xuống dưới ngưỡng đó → gọi `videoEl.pause()`.
+3. Observer được `disconnect()` trong cleanup của `useEffect` để tránh memory leak khi component unmount.
+
+**Xử lý bẫy DOMException:** `HTMLMediaElement.play()` là **Promise async**. Khi user cuộn rất nhanh, hàm `pause()` có thể được gọi trong lúc `play()` chưa resolve, browser sẽ throw `AbortError: The play() request was interrupted by a call to pause()`. Mình giải quyết bằng cách **luôn `.catch()`** trên promise của `play()` để nuốt lỗi này — đồng thời cũng bao luôn `NotAllowedError` xảy ra khi autoplay policy chặn. Để đảm bảo policy autoplay không chặn, video được set `muted` mặc định (yêu cầu bắt buộc của Chrome/Safari để phép autoplay không cần user gesture).
+
+UI state (icon Play overlay) được sync qua sự kiện `onPlay`/`onPause` của `<video>` thay vì set thủ công, nên dù trigger play/pause đến từ **click chuột** hay **Intersection Observer** thì UI luôn nhất quán.
+
+## Vì sao có Error Fallback UI?
+
+Khi test thực tế, một số link mp4 mẫu của đề có thể bị die (404, CORS, hoặc host xoá file) — nếu để vậy, trình duyệt sẽ render một player vỡ với icon "broken video" mặc định, UX rất tệ và làm hỏng layout của feed.
+
+Mình xử lý bằng cách lắng nghe **`onError` event** của `<video>`. Khi event bắn ra, set `hasError = true`, component sẽ render `<ErrorFallback />` — một block nền gradient tối, có icon `AlertTriangle` từ `lucide-react` và thông báo *"Video không khả dụng"*. Đồng thời `useVideoAutoplay` cũng nhận `disabled: hasError` để **không cố gọi `play()`** trên video đã lỗi (tránh log lỗi liên tục trong console).
+
+## Run local
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Cấu trúc thư mục
+```
+app/         # App Router (layout, page, globals)
+components/  # Navigation, VideoFeed, VideoCard
+hooks/       # useVideoAutoplay (IntersectionObserver)
+data/        # mockVideos
+types/       # Video interface
+```
