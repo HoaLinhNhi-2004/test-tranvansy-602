@@ -3,9 +3,9 @@
 Mô phỏng UX xem video cuộn dọc (TikTok / Reels) bằng **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **lucide-react**.
 
 ## Demo
-- **Live:** https://test-nguyenvana-123.vercel.app
-- **Video demo:** https://drive.google.com/...
-- **Source:** https://github.com/.../test-nguyenvana-123
+- **Live:** https://test-tranvansy-602.vercel.app/
+- **Video demo:** https://drive.google.com/file/d/1AxWeYCqKQVZ4hT6BTZGrIvQ-SJiiR9vU/view?usp=sharing
+- **Source:** https://github.com/HoaLinhNhi-2004/test-tranvansy-602.git
 
 ## Stack & Lý do chọn
 | Công nghệ | Lý do |
